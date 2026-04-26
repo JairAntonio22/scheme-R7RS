@@ -75,8 +75,8 @@ func (p *parser) parseValue() scm.Value {
 
 	case quote:
 		p.advance()
-		val = p.parseValue()
-		return scm.List(scm.Quote(), val)
+		quoted := p.parseValue()
+		val = scm.List(scm.Quote(), quoted)
 
 	default:
 		err := fmt.Errorf("%w: got %s", ErrUnexpectedToken, p.curr.typ)

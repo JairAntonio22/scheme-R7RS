@@ -21,3 +21,5 @@ func (e *ReadError) Error() string {
 
 	return builder.String()
 }
+
+var _ error = (*ReadError)(nil)
