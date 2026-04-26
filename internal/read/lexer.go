@@ -60,7 +60,13 @@ func (l *lexer) nextToken() token {
 		if unicode.IsDigit(l.ch) {
 			return token{typ: number, str: l.readNumber()}
 		} else {
-			return token{typ: symbol, str: l.readSymbol()}
+			switch str := l.readStr(); str {
+			case "#t", "#f":
+				return token{typ: boolean, str: str}
+
+			default:
+				return token{typ: symbol, str: str}
+			}
 		}
 	}
 }
@@ -81,7 +87,7 @@ func (l *lexer) readNumber() string {
 	return string(l.input[start : l.pos-1])
 }
 
-func (l *lexer) readSymbol() string {
+func (l *lexer) readStr() string {
 	start := l.pos - 1
 
 	for l.ch != 0 && !unicode.IsSpace(l.ch) && !strings.ContainsRune("()'", l.ch) {

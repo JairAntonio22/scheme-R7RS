@@ -34,16 +34,14 @@ var tests = []struct {
 	},
 	// booleans
 	{
-		name:       "true boolean",
-		input:      "#t",
-		want:       scm.Boolean(true),
-		skipReason: "not implemented",
+		name:  "true boolean",
+		input: "#t",
+		want:  scm.Boolean(true),
 	},
 	{
-		name:       "false boolean",
-		input:      "#f",
-		want:       scm.Boolean(false),
-		skipReason: "not implemented",
+		name:  "false boolean",
+		input: "#f",
+		want:  scm.Boolean(false),
 	},
 	// symbols
 	{

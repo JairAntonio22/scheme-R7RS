@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
-	scheme "github.com/JairAntonio22/scheme-R7RS/internal/scm"
+	"github.com/JairAntonio22/scheme-R7RS/internal/scm"
 )
 
 type parser struct {
@@ -26,9 +26,10 @@ var (
 	ErrUnexpectedToken   = errors.New("unexpected token")
 	ErrTrailingTokens    = errors.New("unexpected trailing tokens")
 	ErrInvalidNumber     = errors.New("invalid number")
+	ErrInvalidBoolean    = errors.New("invalid boolean")
 )
 
-func (p *parser) value() (scheme.Value, error) {
+func (p *parser) value() (scm.Value, error) {
 	val := p.parseValue()
 
 	if p.curr.typ != eof {
@@ -52,25 +53,20 @@ func (p *parser) advance() {
 	p.pos++
 }
 
-func (p *parser) parseValue() scheme.Value {
-	val := scheme.Nil()
+func (p *parser) parseValue() scm.Value {
+	val := scm.Nil()
 
 	switch p.curr.typ {
 	case symbol:
-		val = scheme.Symbol(p.curr.str)
+		val = scm.Symbol(p.curr.str)
 		p.advance()
 
 	case number:
-		num, err := strconv.Atoi(p.curr.str)
+		val = p.number()
+		p.advance()
 
-		if err != nil {
-			err := fmt.Errorf("%w: could not read %s", ErrInvalidNumber, p.curr.str)
-			p.errs = append(p.errs, err)
-
-		} else {
-			val = scheme.Number(num)
-		}
-
+	case boolean:
+		val = p.boolean()
 		p.advance()
 
 	case lParen:
@@ -80,7 +76,7 @@ func (p *parser) parseValue() scheme.Value {
 	case quote:
 		p.advance()
 		val = p.parseValue()
-		return scheme.List(scheme.Quote(), val)
+		return scm.List(scm.Quote(), val)
 
 	default:
 		err := fmt.Errorf("%w: got %s", ErrUnexpectedToken, p.curr.typ)
@@ -91,8 +87,41 @@ func (p *parser) parseValue() scheme.Value {
 	return val
 }
 
-func (p *parser) parseList() scheme.Value {
-	val := scheme.Nil()
+func (p *parser) number() scm.Value {
+	val := scm.Nil()
+	num, err := strconv.Atoi(p.curr.str)
+
+	if err != nil {
+		err := fmt.Errorf("%w: could not read %s", ErrInvalidNumber, p.curr.str)
+		p.errs = append(p.errs, err)
+
+	} else {
+		val = scm.Number(num)
+	}
+
+	return val
+}
+
+func (p *parser) boolean() scm.Value {
+	val := scm.Nil()
+
+	switch p.curr.str {
+	case "#t":
+		val = scm.True
+
+	case "#f":
+		val = scm.False
+
+	default:
+		err := fmt.Errorf("%w: got  %s", ErrInvalidBoolean, p.curr.str)
+		p.errs = append(p.errs, err)
+	}
+
+	return val
+}
+
+func (p *parser) parseList() scm.Value {
+	val := scm.Nil()
 
 	switch p.curr.typ {
 	case rParen:
@@ -104,7 +133,7 @@ func (p *parser) parseList() scheme.Value {
 	default:
 		car := p.parseValue()
 		cdr := p.parseList()
-		val = scheme.Cons(car, cdr)
+		val = scm.Cons(car, cdr)
 	}
 
 	return val

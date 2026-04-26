@@ -13,13 +13,14 @@ func _() {
 	_ = x[lParen-2]
 	_ = x[quote-3]
 	_ = x[number-4]
-	_ = x[symbol-5]
-	_ = x[eof-6]
+	_ = x[boolean-5]
+	_ = x[symbol-6]
+	_ = x[eof-7]
 }
 
-const _tokenType_name = "illegalrParenlParenquotenumbersymboleof"
+const _tokenType_name = "illegalrParenlParenquotenumberbooleansymboleof"
 
-var _tokenType_index = [...]uint8{0, 7, 13, 19, 24, 30, 36, 39}
+var _tokenType_index = [...]uint8{0, 7, 13, 19, 24, 30, 37, 43, 46}
 
 func (i tokenType) String() string {
 	idx := int(i) - 0

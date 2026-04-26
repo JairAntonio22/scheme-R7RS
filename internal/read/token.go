@@ -9,6 +9,7 @@ const (
 	lParen
 	quote
 	number
+	boolean
 	symbol
 	eof
 )
