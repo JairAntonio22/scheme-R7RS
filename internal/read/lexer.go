@@ -17,16 +17,6 @@ func newLexer(s string) *lexer {
 	return &l
 }
 
-func (l *lexer) tokens() []token {
-	tokens := make([]token, 0)
-
-	for t := l.nextToken(); t.typ != eof; t = l.nextToken() {
-		tokens = append(tokens, t)
-	}
-
-	return tokens
-}
-
 func (l *lexer) readRune() {
 	if l.pos >= len(l.input) {
 		l.ch = 0 // EOF
@@ -37,7 +27,7 @@ func (l *lexer) readRune() {
 	l.pos++
 }
 
-func (l *lexer) nextToken() token {
+func (l *lexer) token() token {
 	l.skipWhitespace()
 
 	switch l.ch {

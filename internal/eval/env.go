@@ -1,18 +1,22 @@
-package scm
+package eval
 
 // Env
 // bindings are never nil, parent is nil on global.
 type Env struct {
-	bindings map[Symbol]Value
+	bindings map[Value]Value
 	parent   *Env
 }
 
 func NewEnv(parent *Env) *Env {
-	bindings := make(map[Symbol]Value)
+	bindings := make(map[Value]Value)
 	return &Env{bindings: bindings, parent: parent}
 }
 
-func (e *Env) LookUp(s Symbol) (Value, bool) {
+func DefaultEnv() *Env {
+	return &Env{bindings: builtIns, parent: nil}
+}
+
+func (e *Env) LookUp(s Value) (Value, bool) {
 	curr := e
 
 	for curr != nil {
@@ -28,6 +32,6 @@ func (e *Env) LookUp(s Symbol) (Value, bool) {
 	return nil, false
 }
 
-func (e *Env) Define(s Symbol, v Value) {
+func (e *Env) Define(s, v Value) {
 	e.bindings[s] = v
 }

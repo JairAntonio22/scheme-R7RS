@@ -1,16 +1,17 @@
 package read_test
 
 import (
+	"errors"
 	"testing"
 
+	"github.com/JairAntonio22/scheme-R7RS/internal/eval"
 	"github.com/JairAntonio22/scheme-R7RS/internal/read"
-	"github.com/JairAntonio22/scheme-R7RS/internal/scm"
 )
 
 var tests = []struct {
 	name       string
 	input      string
-	want       scm.Value
+	want       eval.Value
 	wantErr    error
 	skipReason string
 }{
@@ -18,106 +19,106 @@ var tests = []struct {
 	{
 		name:  "number",
 		input: "42",
-		want:  scm.Number(42),
+		want:  eval.Number(42),
 	},
 	{
 		name:       "negative number",
 		input:      "-15",
-		want:       scm.Number(-15),
-		skipReason: "not implemented",
+		want:       eval.Number(-15),
+		skipReason: "TODO",
 	},
 	{
 		name:       "float number",
 		input:      "3.14",
-		want:       scm.Number(3),
-		skipReason: "not implemented",
+		want:       eval.Number(3),
+		skipReason: "TODO",
 	},
 	// booleans
 	{
 		name:  "true boolean",
 		input: "#t",
-		want:  scm.Boolean(true),
+		want:  eval.Boolean(true),
 	},
 	{
 		name:  "false boolean",
 		input: "#f",
-		want:  scm.Boolean(false),
+		want:  eval.Boolean(false),
 	},
 	// symbols
 	{
 		name:  "symbol with letters",
 		input: "hello",
-		want:  scm.Symbol("hello"),
+		want:  eval.Symbol("hello"),
 	},
 	{
 		name:  "symbol with no letters",
 		input: "+",
-		want:  scm.Symbol("+"),
+		want:  eval.Symbol("+"),
 	},
 	{
 		name:  "built in symbol",
 		input: "car",
-		want:  scm.Symbol("car"),
+		want:  eval.Symbol("car"),
 	},
 	{
 		name:  "special form symbol",
 		input: "define",
-		want:  scm.Symbol("define"),
+		want:  eval.Symbol("define"),
 	},
 	{
 		name:  "symbol with letters and graphs",
 		input: "foo-bar",
-		want:  scm.Symbol("foo-bar"),
+		want:  eval.Symbol("foo-bar"),
 	},
 	{
 		name:  "nil",
 		input: "()",
-		want:  scm.Nil(),
+		want:  eval.Nil{},
 	},
 	// lists
 	{
 		name:  "simple list",
 		input: "(+ 1 2)",
-		want:  scm.List(scm.Symbol("+"), scm.Number(1), scm.Number(2)),
+		want:  eval.List(eval.Symbol("+"), eval.Number(1), eval.Number(2)),
 	},
 	{
 		name:  "nested list",
 		input: "(+ 1 (* 2 3))",
-		want: scm.List(
-			scm.Symbol("+"),
-			scm.Number(1),
-			scm.List(scm.Symbol("*"), scm.Number(2), scm.Number(3)),
+		want: eval.List(
+			eval.Symbol("+"),
+			eval.Number(1),
+			eval.List(eval.Symbol("*"), eval.Number(2), eval.Number(3)),
 		),
 	},
 	{
 		name:  "multi-level list",
 		input: "((1 2) (3 4))",
-		want: scm.List(
-			scm.List(scm.Number(1), scm.Number(2)),
-			scm.List(scm.Number(3), scm.Number(4)),
+		want: eval.List(
+			eval.List(eval.Number(1), eval.Number(2)),
+			eval.List(eval.Number(3), eval.Number(4)),
 		),
 	},
 	// quote
 	{
 		name:  "simple quote",
 		input: "'a",
-		want:  scm.List(scm.Quote(), scm.Symbol("a")),
+		want:  eval.List(eval.Quote, eval.Symbol("a")),
 	},
 	{
 		name:  "list quote",
 		input: "'(1 2 3)",
-		want:  scm.List(scm.Quote(), scm.List(scm.Number(1), scm.Number(2), scm.Number(3))),
+		want:  eval.List(eval.Quote, eval.List(eval.Number(1), eval.Number(2), eval.Number(3))),
 	},
 	{
 		name:  "nested quote",
 		input: "''a",
-		want:  scm.List(scm.Quote(), scm.List(scm.Quote(), scm.Symbol("a"))),
+		want:  eval.List(eval.Quote, eval.List(eval.Quote, eval.Symbol("a"))),
 	},
 	// whitespace
 	{
 		name:  "extra whitespace",
 		input: "   (+   1   2 )",
-		want:  scm.List(scm.Symbol("+"), scm.Number(1), scm.Number(2)),
+		want:  eval.List(eval.Symbol("+"), eval.Number(1), eval.Number(2)),
 	},
 	{
 		name: "extra whitespace",
@@ -126,37 +127,42 @@ var tests = []struct {
   1
   2
 )`,
-		want: scm.List(scm.Symbol("+"), scm.Number(1), scm.Number(2)),
+		want: eval.List(eval.Symbol("+"), eval.Number(1), eval.Number(2)),
 	},
 	// errors
 	{
-		name:       "missing closing parenthesis",
-		input:      "(+",
-		skipReason: "TODO",
+		name:    "missing closing parenthesis",
+		input:   "(+",
+		want:    eval.List(eval.Symbol("+")),
+		wantErr: read.ErrMissingClosingParen,
 	},
 	{
-		name:       "extra parenthesis",
-		input:      ")",
-		skipReason: "TODO",
+		name:    "extra parenthesis",
+		input:   ")",
+		want:    eval.Nil{},
+		wantErr: read.ErrUnexpectedToken,
 	},
 	{
-		name:       "unclosed list",
-		input:      "(+ 1 2",
-		skipReason: "TODO",
+		name:    "unclosed list",
+		input:   "(+ 1 2",
+		want:    eval.List(eval.Symbol("+"), eval.Number(1), eval.Number(2)),
+		wantErr: read.ErrMissingClosingParen,
 	},
 	{
-		name:       "empty",
-		input:      "",
-		skipReason: "TODO",
+		name:    "empty",
+		input:   "",
+		want:    eval.Nil{},
+		wantErr: read.ErrUnexpectedToken,
 	},
 	{
-		name:       "invalid quote",
-		input:      "'",
-		skipReason: "TODO",
+		name:    "invalid quote",
+		input:   "'",
+		want:    eval.List(eval.Quote, eval.Nil{}),
+		wantErr: read.ErrUnexpectedToken,
 	},
 	{
-		name:       "invalid quote",
-		input:      "'",
+		name:       "invalid dot",
+		input:      ".",
 		skipReason: "TODO",
 	},
 }
@@ -172,12 +178,12 @@ func TestReadValue(t *testing.T) {
 				t.Skip(test.skipReason)
 			}
 
-			got, err := read.ReadValue(test.input)
-			if err != nil {
-				t.Errorf("error %v", err)
+			got, err := read.Read(test.input)
+			if err != nil && !errors.Is(err, test.wantErr) {
+				t.Errorf("got %v, want %v", err, test.wantErr)
 			}
 
-			if scm.Equal(got, test.want) == scm.False {
+			if eval.Equal(got, test.want) == eval.False {
 				t.Errorf("got %v, want %v", got, test.want)
 			}
 		})
