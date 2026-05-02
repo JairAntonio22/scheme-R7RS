@@ -4,24 +4,34 @@ import (
 	"fmt"
 
 	"github.com/JairAntonio22/scheme-R7RS/internal/eval"
+	"github.com/JairAntonio22/scheme-R7RS/internal/print"
 	"github.com/JairAntonio22/scheme-R7RS/internal/read"
-	"github.com/k0kubun/pp/v3"
 )
 
 func main() {
 	fmt.Println()
 
-	s := "(list 'a b)"
+	input := `
+	(define make-adder
+		(lambda (x)
+			(lambda (y) (+ x y))))
 
-	value, err := read.Read(s)
+	(define add5 (make-adder 5))
+
+	(add5 3)
+	`
+
+	value, err := read.Read(input)
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
 
-	value, err = eval.Eval(value, eval.DefaultEnv())
+	env := eval.DefaultEnv()
+	value, err = eval.Eval(value, env)
 	if err != nil {
 		fmt.Println(err)
+	} else {
+		fmt.Println(print.Print(value))
 	}
-
-	_, _ = pp.Println(value)
 }

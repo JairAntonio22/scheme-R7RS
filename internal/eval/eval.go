@@ -25,45 +25,47 @@ func Eval(input Value, env *Env) (Value, error) {
 		return input, nil
 
 	case Symbol:
-		var err error
 		envVal, exists := env.LookUp(val)
 
 		if !exists {
-			err = fmt.Errorf("%w: got %s", ErrSymbolNotDefined, input)
+			return Nil{}, fmt.Errorf("%w: got %s", ErrSymbolNotDefined, input)
 		}
 
-		return envVal, err
+		return envVal, nil
 
-	case Pair:
-		args := toSlice(val.Cdr)
-		function, exists := env.LookUp(val.Car)
+	case *Pair:
+		slice := toSlice(val)
+		sym, ok := slice[0].(Symbol)
 
-		if !exists {
-			return Nil{}, fmt.Errorf("%w: got %s", ErrSymbolNotDefined, val.Car)
+		if ok {
+			form, isSpecialForm := specialForms[sym]
+
+			if isSpecialForm {
+				return form(env, slice[1:]...), nil
+			}
 		}
 
-		return Apply(function, args...)
+		evalSlice := make([]Value, 0, len(slice))
+
+		for i := range slice {
+			evalArg, err := Eval(slice[i], env)
+			if err != nil {
+				return Nil{}, err
+			}
+
+			evalSlice = append(evalSlice, evalArg)
+		}
+
+		return Apply(evalSlice[0], evalSlice[1:]...)
 
 	default:
 		return Nil{}, fmt.Errorf("%w: got %s", ErrCannotEval, input)
 	}
 }
 
-func toSlice(value Value) []Value {
-	slice := make([]Value, 0)
-	pair, isPair := value.(*Pair)
-
-	for isPair {
-		slice = append(slice, pair.Car)
-		pair, isPair = pair.Cdr.(*Pair)
-	}
-
-	return slice
-}
-
 func Apply(symbol Value, args ...Value) (Value, error) {
 	switch function := symbol.(type) {
-	case BuiltIn:
+	case *BuiltIn:
 		if len(args) != function.argc {
 			return Nil{}, fmt.Errorf(
 				"%w: got %d, expected %d",

@@ -2,23 +2,14 @@ package eval
 
 import "fmt"
 
-var builtIns = map[Value]Value{
+var defaultBindings = map[Value]Value{
 	Symbol("cons"):   &BuiltIn{name: "cons", argc: 2, callback: Cons},
 	Symbol("list"):   &BuiltIn{name: "list", argc: 2, callback: List},
 	Symbol("equal?"): &BuiltIn{name: "equal?", argc: 2, callback: Equal},
 	Symbol("pair?"):  &BuiltIn{name: "pair?", argc: 1, callback: IsPair},
 	Symbol("list?"):  &BuiltIn{name: "list?", argc: 1, callback: IsList},
+	Symbol("+"):      &BuiltIn{name: "+", argc: 2, callback: Add},
 }
-
-type BuiltIn struct {
-	name     string
-	argc     int
-	callback Callback
-}
-
-type Callback func(args ...Value) Value
-
-func (bi BuiltIn) sealed() {}
 
 func Cons(args ...Value) Value {
 	return &Pair{Car: args[0], Cdr: args[1]}
@@ -34,7 +25,7 @@ func List(args ...Value) Value {
 	return list
 }
 
-func Equal(args ...Value) Value { //nolint:cyclop // this method is straightfoward
+func Equal(args ...Value) Value {
 	switch val1 := args[0].(type) {
 	case Number:
 		val2, ok := args[1].(Number)
@@ -77,4 +68,15 @@ func IsList(args ...Value) Value {
 	default:
 		return False
 	}
+}
+
+func Add(args ...Value) Value {
+	result := 0
+
+	for _, arg := range args {
+		val, _ := arg.(Number)
+		result += int(val)
+	}
+
+	return Number(result)
 }

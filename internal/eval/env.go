@@ -1,37 +1,40 @@
 package eval
 
+import "maps"
+
 // Env
 // bindings are never nil, parent is nil on global.
 type Env struct {
-	bindings map[Value]Value
-	parent   *Env
+	Bindings map[Value]Value
+	Parent   *Env
 }
 
 func NewEnv(parent *Env) *Env {
 	bindings := make(map[Value]Value)
-	return &Env{bindings: bindings, parent: parent}
+	return &Env{Bindings: bindings, Parent: parent}
 }
 
 func DefaultEnv() *Env {
-	return &Env{bindings: builtIns, parent: nil}
+	bindings := maps.Clone(defaultBindings)
+	return &Env{Bindings: bindings, Parent: nil}
 }
 
 func (e *Env) LookUp(s Value) (Value, bool) {
 	curr := e
 
 	for curr != nil {
-		value, exists := curr.bindings[s]
+		value, exists := curr.Bindings[s]
 
 		if exists {
 			return value, true
 		}
 
-		curr = curr.parent
+		curr = curr.Parent
 	}
 
 	return nil, false
 }
 
 func (e *Env) Define(s, v Value) {
-	e.bindings[s] = v
+	e.Bindings[s] = v
 }
