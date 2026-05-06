@@ -178,7 +178,7 @@ func TestReadValue(t *testing.T) {
 				t.Skip(test.skipReason)
 			}
 
-			got, err := read.Read(test.input)
+			got, err := read.Value(test.input)
 			if err != nil && !errors.Is(err, test.wantErr) {
 				t.Errorf("got %v, want %v", err, test.wantErr)
 			}

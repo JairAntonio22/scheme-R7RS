@@ -7,7 +7,7 @@ import (
 	"github.com/JairAntonio22/scheme-R7RS/internal/eval"
 )
 
-func Read(s string) (eval.Value, error) {
+func Value(s string) (eval.Value, error) {
 	parse := newParser(s)
 
 	val, err := parse.value()
@@ -24,4 +24,18 @@ func Read(s string) (eval.Value, error) {
 	}
 
 	return val, err
+}
+
+func Program(s string) ([]eval.Value, error) {
+	parse := newParser(s)
+	program := make([]eval.Value, 0)
+	var err error
+
+	for parse.curr.typ != eof {
+		val, valErr := parse.value()
+		program = append(program, val)
+		err = errors.Join(err, valErr)
+	}
+
+	return program, err
 }

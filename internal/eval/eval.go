@@ -38,10 +38,18 @@ func Eval(input Value, env *Env) (Value, error) {
 		sym, ok := slice[0].(Symbol)
 
 		if ok {
-			form, isSpecialForm := specialForms[sym]
+			switch sym {
+			case Quote:
+				return QuoteForm(env, slice[1:]...), nil
 
-			if isSpecialForm {
-				return form(env, slice[1:]...), nil
+			case Define:
+				return DefineForm(env, slice[1:]...), nil
+
+			case If:
+				return IfForm(env, slice[1:]...), nil
+
+			case Lambda:
+				return LambdaForm(env, slice[1:]...), nil
 			}
 		}
 

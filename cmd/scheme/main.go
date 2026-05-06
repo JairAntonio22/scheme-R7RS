@@ -12,26 +12,26 @@ func main() {
 	fmt.Println()
 
 	input := `
-	(define make-adder
-		(lambda (x)
-			(lambda (y) (+ x y))))
-
-	(define add5 (make-adder 5))
-
-	(add5 3)
+		(define add5 ((lambda (x) (lambda (y) (+ x y))) 5))
+		(add5 3)
 	`
 
-	value, err := read.Read(input)
+	program, err := read.Program(input)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
 	env := eval.DefaultEnv()
-	value, err = eval.Eval(value, env)
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Println(print.Print(value))
+
+	for _, value := range program {
+		print.Print(value)
+
+		value, err = eval.Eval(value, env)
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Println(print.Print(value))
+		}
 	}
 }

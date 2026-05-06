@@ -2,13 +2,6 @@ package eval
 
 type SpecialForm func(env *Env, args ...Value) Value
 
-var specialForms = map[Value]SpecialForm{
-	Quote:  QuoteForm,
-	Define: DefineForm,
-	If:     IfForm,
-	Lambda: LambdaForm,
-}
-
 var Quote = Symbol("quote")
 
 func QuoteForm(env *Env, args ...Value) Value {
@@ -18,7 +11,9 @@ func QuoteForm(env *Env, args ...Value) Value {
 var Define = Symbol("define")
 
 func DefineForm(env *Env, args ...Value) Value {
-	env.Define(args[0], args[1])
+	sym := args[0]
+	val, _ := Eval(args[1], env)
+	env.Define(sym, val)
 	return Nil{}
 }
 
@@ -26,10 +21,12 @@ var If = Symbol("if")
 
 func IfForm(env *Env, args ...Value) Value {
 	if args[0] == True {
-		return args[0]
+		val, _ := Eval(args[1], env)
+		return val
 	}
 
-	return args[1]
+	val, _ := Eval(args[2], env)
+	return val
 }
 
 var Lambda = Symbol("lambda")
